@@ -1,7 +1,11 @@
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.diff.*;
+import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.diff.contents.FileContentImpl;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.tools.util.base.DiffViewerBase;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -12,10 +16,15 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.vcs.VcsActions;
+import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
+import git4idea.diff.GitDiffProvider;
 import groovyjarjarantlr4.v4.runtime.misc.NotNull;
 
 // 拦截 IDE 跳转动作
@@ -63,25 +72,65 @@ public class CRNavigationHandler extends EditorActionHandler {
 
     // 4. 获取当前 Diff 的版本范围
     private RevisionRange getCurrentDiffRevisionRange(Editor editor) {
-        FileEditor fileEditor = FileEditorManager.getInstance(editor.getProject()).getSelectedEditor();
-        if (fileEditor instanceof TextEditor) {
-            DiffRequest diffRequest = ((TextEditor) fileEditor).getUserData(DiffUserDataKeysEx.DIFF_REQUEST);
-            if (diffRequest instanceof GitDiffRequest) {
-                return ((GitDiffRequest) diffRequest).getRevisionRange();
+        // 使用 GitDiffRequest 方式 - 行不通
+        //FileEditor fileEditor = FileEditorManager.getInstance(editor.getProject()).getSelectedEditor();
+        //if (fileEditor instanceof DiffViewerBase) {
+        //    DiffViewerBase diffViewer = (DiffViewerBase) fileEditor;
+        //    DiffRequest request = diffViewer.getRequest();
+        //    if (request instanceof GitDiffRequest) {
+        //        return ((GitDiffRequest) request).getRevisionRange();
+        //    }
+        //}
+        //return null;
+
+        // VcsDiffRequest 方式
+        FileEditor fileEditor = getCurrentFileEditor(editor);
+        if (!(fileEditor instanceof TextEditor)) return null;
+
+        if (fileEditor instanceof DiffViewerBase) {
+            DiffViewerBase diffViewer = (DiffViewerBase) fileEditor;
+            DiffRequest request = diffViewer.getRequest();
+            GitDiff
+
+            if (request instanceof VcsDiffRequest) {
+                return createRevisionRange((VcsDiffRequest) request);
             }
         }
-        return null;
+
+
+        FrameDiffTool.DiffViewer diffViewer = DiffUtil.getDiffViewer((TextEditor) fileEditor);
+        if (diffViewer == null) return null;
+
+        // 获取 DiffRequestProducer
+        DiffRequestProducer requestProducer = DiffUtil.getDiffRequestProducer(diffViewer);
+        if (!(requestProducer instanceof GitDiffRequestProducer)) return null;
+
+        GitDiffProvider gitProducer = (GitDiffProvider) requestProducer;
+        GitDiffProvider testP = new GitDiffProvider();
+
+
+
+        // 获取版本范围
+        GitRevisionNumber baseRevision = gitProducer.getBaseRevision();
+        GitRevisionNumber targetRevision = gitProducer.getTargetRevision();
+
+        // 获取当前所在的分支侧
+        ThreeSide currentSide = ThreeSide.fromLeft(diffViewer.getCurrentSide() == Side.LEFT);
+        return new DiffRevisionContext(baseRevision, targetRevision, currentSide);
+
     }
+
 
     // 5. 打开 Diff 窗口并定位到目标位置
     private void openInDiffViewer(VirtualFile targetFile, int offset, RevisionRange revisionRange) {
         Project project = ProjectManager.getInstance().getOpenProjects()[0];
         GitRevisionNumber targetRevision = (GitRevisionNumber) revisionRange.getTargetRevision();
 
+        GitContentRevision
         // 创建 Diff 请求
         SimpleDiffRequest request = new SimpleDiffRequest(
                 "Code Review Navigation",
-                createContent(revisionRange.getSourceRevision(), targetFile),
+                new FileContentImpl(project,targetFile), //createContent(revisionRange.getSourceRevision(), targetFile),
                 createContent(targetRevision, targetFile),
                 "Base Version",
                 "Target Branch"
@@ -97,6 +146,19 @@ public class CRNavigationHandler extends EditorActionHandler {
 
     private Content createContent(Revision revision, VirtualFile file) {
         return new FileContentImpl(revision, file);
+    }
+
+
+
+
+    private FileEditor getCurrentFileEditor(Editor editor) {
+        Project project = editor.getProject();
+        if (project == null) return null;
+
+        VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+        if (file == null) return null;
+
+        return FileEditorManager.getInstance(project).getSelectedEditor(file);
     }
 
 
