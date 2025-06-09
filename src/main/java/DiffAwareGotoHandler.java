@@ -25,11 +25,10 @@ import groovyjarjarantlr4.v4.runtime.misc.Nullable;
 
 import java.util.List;
 
-// 拦截 IDE 跳转动作
-public class CRNavigationHandler extends EditorActionHandler {
+public class DiffAwareGotoHandler extends EditorActionHandler {
     private final EditorActionHandler originalHandler;
 
-    public CRNavigationHandler(EditorActionHandler originalHandler) {
+    public DiffAwareGotoHandler(EditorActionHandler originalHandler) {
         this.originalHandler = originalHandler;
     }
 
