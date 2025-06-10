@@ -1,3 +1,5 @@
+package com.wrh.dev.crnavigatetool;
+
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.contents.DiffContent;
@@ -20,25 +22,30 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import groovyjarjarantlr4.v4.runtime.misc.NotNull;
-import groovyjarjarantlr4.v4.runtime.misc.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DiffAwareGotoHandler extends EditorActionHandler {
+// 拦截 IDE 跳转动作
+public class CRNavigationHandler extends EditorActionHandler {
     private final EditorActionHandler originalHandler;
 
-    public DiffAwareGotoHandler(EditorActionHandler originalHandler) {
+    public CRNavigationHandler(EditorActionHandler originalHandler) {
+        System.out.println("enter CRNavigationHandler");
         this.originalHandler = originalHandler;
     }
 
     @Override
     protected void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
-        if (isInDiffContext(editor)) {
-            handleDiffRedirect(editor, dataContext);
-        } else {
-            originalHandler.execute(editor, caret, dataContext);
-        }
+        System.out.println("enter doExecute");
+        //if (isInDiffContext(editor)) {
+        //    System.out.println("isInDiffContext");
+        //    handleDiffRedirect(editor, dataContext);
+        //} else {
+        //    System.out.println("not isInDiffContext");
+        //    originalHandler.execute(editor, caret, dataContext);
+        //}
     }
 
     // 后续方法将在这里实现
@@ -55,18 +62,25 @@ public class DiffAwareGotoHandler extends EditorActionHandler {
     //2.重定向跳转到 Diff 视图
     private void handleDiffRedirect(Editor editor, DataContext dataContext) {
         Project project = editor.getProject();
-        if (project == null) return;
+        if (project == null) {
+            System.out.println("getProject empty");
+            return;
+        }
 
         // 2.1. 获取目标元素
         PsiElement targetElement = getTargetElement(editor, dataContext);
         if (targetElement == null) {
+            System.out.println("targetElement empty");
             originalHandler.execute(editor, null, dataContext);
             return;
         }
 
         // 2.2. 获取目标文件
         VirtualFile targetFile = getContainingVirtualFile(targetElement);
-        if (targetFile == null) return;
+        if (targetFile == null) {
+            System.out.println("targetFile empty");
+            return;
+        }
 
 
 
@@ -74,6 +88,7 @@ public class DiffAwareGotoHandler extends EditorActionHandler {
         ContentDiffRequest currentRequest = getCurrentDiffRequest(dataContext);
         if (currentRequest == null) {
             originalHandler.execute(editor, null, dataContext);
+            System.out.println("currentRequest empty");
             return;
         }
 
@@ -115,6 +130,7 @@ public class DiffAwareGotoHandler extends EditorActionHandler {
 
         List<DiffContent> contents = currentRequest.getContents();
         if (contents.size() < 2) {
+            System.out.println("contents.size() < 2");
             return; // 不是标准的两边对比
         }
 
@@ -133,6 +149,7 @@ public class DiffAwareGotoHandler extends EditorActionHandler {
             request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, lineNumber));
         }
 
+        System.out.println("start show diff");
         // 在现有Diff窗口打开
         DiffManager.getInstance().showDiff(project, request /*, new DiffDialogHints(
                 ToolWindowAnchor.RIGHT,

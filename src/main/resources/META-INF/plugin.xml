@@ -20,11 +20,37 @@
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
-    <depends>Git4Idea</depends>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
+
+<!--        <gotoDeclarationHandler implementation="com.wrh.dev.crnavigatetool.GotoDeclareExHandler"/>-->
+
+        <editorActionHandler action="GotoDeclaration" implementationClass="com.wrh.dev.crnavigatetool.CRNavigationHandler"/>
+
+        <!-- 覆盖Goto声明操作 -->
+<!--        <editorActionHandler-->
+<!--                action="GotoDeclaration"-->
+<!--                implementationClass="com.wrh.dev.crnavigatetool.CRNavigationHandler"/>-->
+
+        <!-- 覆盖Goto实现操作 -->
+        <editorActionHandler
+                action="GotoImplementation"
+                implementationClass="com.wrh.dev.crnavigatetool.CRNavigationHandler"/>
+
+        <!-- 覆盖Goto类型声明操作 -->
+        <editorActionHandler
+                action="GotoTypeDeclaration"
+                implementationClass="com.wrh.dev.crnavigatetool.CRNavigationHandler"/>
+
+        <!-- 覆盖查找用法操作 -->
+        <editorActionHandler
+                action="FindUsages"
+                implementationClass="com.wrh.dev.crnavigatetool.CRNavigationHandler"/>
+
+<!--        <applicationService-->
+<!--                serviceImplementation="com.wrh.dev.crnavigatetool.DiffHandlerOverride"/>-->
 
     </extensions>
 </idea-plugin>
