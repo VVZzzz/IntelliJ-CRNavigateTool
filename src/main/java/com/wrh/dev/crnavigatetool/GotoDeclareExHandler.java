@@ -1,6 +1,7 @@
 package com.wrh.dev.crnavigatetool;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.contents.DiffContent;
@@ -32,22 +33,37 @@ import javax.swing.*;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static com.intellij.openapi.editor.EditorKind.DIFF;
+
 // 拦截 IDE 跳转动作
-public class GotoDeclareExHandler implements GotoDeclarationHandler {
+public class GotoDeclareExHandler extends GotoDeclarationHandlerBase {
     @Override
     public PsiElement @Nullable [] getGotoDeclarationTargets(
             @Nullable PsiElement sourceElement,
             int offset,
             Editor editor) {
         System.out.println("GotoDeclareExHandler");
+
+        if (isInDiffContext(editor)) {
+            System.out.println("isInDiffContext");
+        } else {
+            System.out.println("not isInDiffContext");
+        }
         return null; // 使用默认处理
     }
 
 
+    @Override
+    public @Nullable PsiElement getGotoDeclarationTarget(@Nullable PsiElement sourceElement, Editor editor) {
+        System.out.println("getGotoDeclarationTarget");
+        return null;
+    }
+
+
+    // 用来参考
     //@Override
     //protected void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
     //    System.out.println("enter doExecute");
-    //    LOG.info("enter doExecute");
     //    if (isInDiffContext(editor)) {
     //        System.out.println("isInDiffContext");
     //        handleDiffRedirect(editor, dataContext);
@@ -59,14 +75,10 @@ public class GotoDeclareExHandler implements GotoDeclarationHandler {
 
     //// 后续方法将在这里实现
 
-    ////1.是否是在Diff窗口中
-    //private boolean isInDiffContext(Editor editor) {
-    //    Project project = editor.getProject();
-    //    if (project == null) return false;
-
-    //    ToolWindow diffWindow = ToolWindowManager.getInstance(project).getToolWindow("Diff");
-    //    return diffWindow != null && diffWindow.isVisible();
-    //}
+    //1.是否是在Diff窗口中
+    private boolean isInDiffContext(Editor editor) {
+        return editor.getEditorKind() == DIFF;
+    }
 
     ////2.重定向跳转到 Diff 视图
     //private void handleDiffRedirect(Editor editor, DataContext dataContext) {
