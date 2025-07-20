@@ -28,6 +28,8 @@
                     text="TextCustomGotoDeclare"
                     description="DecCustomGotoDeclare"
                     id="TestCustomGotoDeclare">
+                <keyboard-shortcut first-keystroke="alt shift B"
+                                   keymap="$default"/>
             </action>
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </group>
