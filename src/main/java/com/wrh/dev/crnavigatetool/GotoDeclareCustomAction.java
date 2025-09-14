@@ -21,6 +21,9 @@ import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -31,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.diff.DiffVcsDataKeys.REVISION_INFO;
 import static com.intellij.openapi.editor.EditorKind.DIFF;
 
 public class GotoDeclareCustomAction extends GotoDeclarationAction {
@@ -129,10 +133,27 @@ public class GotoDeclareCustomAction extends GotoDeclarationAction {
             return; // 不是标准的两边对比
         }
 
+        VirtualFile leftDiffVirtualFile = targetFile;
+
         // 创建目标文件的Diff请求
+        // todo: contents 里面有 revision 信息，需要获取到 targetFile 对应的 revision 的信息,具体是左侧 contents[0].MergeRevisionInfo
+        // first: 文件名字; second: commit number
+        // todo: 可以把文件名修改好
+
+        // 获取跳转前文件的 revision 信息
+        @Nullable Pair<FilePath, VcsRevisionNumber> revisionInfo = contents.get(0).getUserData(REVISION_INFO);
+        System.out.println(revisionInfo);
+
+        if (revisionInfo != null) {
+            VcsFileRevision targetFileRevision = VcsFileRevisionHelper.getFileContentByRevision(project,targetFile, revisionInfo.getSecond().asString());
+            if (targetFileRevision != null) {
+                leftDiffVirtualFile = VcsRevisionToVirtualFile.convert(targetFileRevision, targetFile.getName());
+                System.out.println("更换左侧文件");
+            }
+        }
         SimpleDiffRequest request = new SimpleDiffRequest(
                 targetFile.getName(),
-                createTargetDiffContent(project, targetFile, contents.get(0)),
+                createTargetDiffContent(project, leftDiffVirtualFile, contents.get(0)),
                 createTargetDiffContent(project, targetFile, contents.get(1)),
                 currentRequest.getContentTitles().get(0),
                 currentRequest.getContentTitles().get(1)
