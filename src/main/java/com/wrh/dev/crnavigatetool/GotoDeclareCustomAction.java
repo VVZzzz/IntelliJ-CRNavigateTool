@@ -138,6 +138,7 @@ public class GotoDeclareCustomAction extends GotoDeclarationAction {
         // 创建目标文件的Diff请求
         // contents 里面有 revision 信息，需要获取到 targetFile 对应的 revision 的信息,具体是左侧 contents[0].MergeRevisionInfo
         // first: 文件名字; second: commit number
+        // todo: 1.对于左侧文件没有对应 revision 的情况 2.对于左侧文件在对应 revision 版本是没有文件的情况
 
         // 获取跳转前原文件的 revision 信息
         @Nullable Pair<FilePath, VcsRevisionNumber> revisionInfo = contents.get(0).getUserData(REVISION_INFO);

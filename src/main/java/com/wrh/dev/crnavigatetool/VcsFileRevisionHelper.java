@@ -27,7 +27,7 @@ public class VcsFileRevisionHelper {
      * @return 特定版本的文件内容，若失败则返回 null
      */
     @Nullable
-    public static VcsFileRevision getFileContentByRevision(
+    public static FileRevisionResultWrapper getFileContentByRevision(
             @NotNull Project project,
             @NotNull VirtualFile file,
             @NotNull String revisionId
@@ -60,17 +60,25 @@ public class VcsFileRevisionHelper {
             VcsHistorySession historySession = historyProvider.createSessionFor(filePath);
             List<VcsFileRevision> revisions = historySession.getRevisionList();
 
-            // 6. 查找目标 revision
+            // 6. 查找目标 revision(revisions 按照时间倒序)
+            // 如果查不到对应 revisionId 有两个情况,通过时间判断确认:
+            // 1.该文件在该 revisionId 版本之前是有的, revisionId 版本它没有对应的变更
+            // 2.该文件在该 revisionId 版本之前从未被添加过
+            boolean notExistBeforeTargetRevision = false;
             for (VcsFileRevision revision : revisions) {
+                // todo: 需要传入原文件的 vituralfile  来找到对应 revisionId 对应的时间 date
+
                 // 不同 VCS 的 revision 标识格式不同，通过 asString() 统一比较
                 if (revisionId.equals(revision.getRevisionNumber().asString())) {
                     // 7. 读取该版本的文件内容（字节数组转字符串）
-                    //byte[] contentBytes = revision.getContent();
-                    //return contentBytes != null ? new String(contentBytes, StandardCharsets.UTF_8) : null;
-                    return revision;
+                    return new FileRevisionResultWrapper(revision, FileRevisionNoFoundReason.Unknown);
 
                 }
             }
+
+
+
+
         } catch (VcsException e) {
             // 处理 VCS 操作异常（如历史记录获取失败）
             e.printStackTrace();
