@@ -136,13 +136,11 @@ public class GotoDeclareCustomAction extends GotoDeclarationAction {
         VirtualFile leftDiffVirtualFile = targetFile;
 
         // 创建目标文件的Diff请求
-        // todo: contents 里面有 revision 信息，需要获取到 targetFile 对应的 revision 的信息,具体是左侧 contents[0].MergeRevisionInfo
+        // contents 里面有 revision 信息，需要获取到 targetFile 对应的 revision 的信息,具体是左侧 contents[0].MergeRevisionInfo
         // first: 文件名字; second: commit number
-        // todo: 可以把文件名修改好
 
-        // 获取跳转前文件的 revision 信息
+        // 获取跳转前原文件的 revision 信息
         @Nullable Pair<FilePath, VcsRevisionNumber> revisionInfo = contents.get(0).getUserData(REVISION_INFO);
-        System.out.println(revisionInfo);
 
         if (revisionInfo != null) {
             VcsFileRevision targetFileRevision = VcsFileRevisionHelper.getFileContentByRevision(project,targetFile, revisionInfo.getSecond().asString());
@@ -190,10 +188,12 @@ public class GotoDeclareCustomAction extends GotoDeclarationAction {
                                                 VirtualFile targetFile,
                                                 DiffContent originalContent) {
         // 如果当前内容已经是目标文件，则复用
-        //VirtualFile originalFile = originalContent.getFile();
-        //if (originalFile != null && Objects.equals(originalFile.getPath(), targetFile.getPath())) {
-        //    return originalContent;
-        //}
+        @Nullable Pair<FilePath, VcsRevisionNumber> revisionInfo = originalContent.getUserData(REVISION_INFO);
+        if (revisionInfo != null) {
+            if (targetFile.getPath().equals(revisionInfo.getFirst().getPath())) {
+                return originalContent;
+            }
+        }
 
         // 否则创建新的内容
         return DiffContentFactory.getInstance().create(project, targetFile);

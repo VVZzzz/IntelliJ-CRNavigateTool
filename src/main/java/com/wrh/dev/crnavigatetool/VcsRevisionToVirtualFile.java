@@ -51,7 +51,10 @@ public class VcsRevisionToVirtualFile {
         } finally {
             // 注意：如果需要长期使用 VirtualFile，不要在这里删除临时文件
             // 可以在使用完毕后（如关闭编辑器时）手动删除
-            if (tempFile != null) tempFile.deleteOnExit(); // 程序退出时自动清理
+            if (tempFile != null) {
+                System.out.println("删除临时文件");
+                tempFile.deleteOnExit(); // 程序退出时自动清理
+            }
         }
     }
 }
