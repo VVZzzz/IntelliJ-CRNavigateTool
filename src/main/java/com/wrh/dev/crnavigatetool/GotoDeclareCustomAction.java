@@ -149,6 +149,7 @@ public class GotoDeclareCustomAction extends GotoDeclarationAction {
                 System.out.println("更换左侧文件");
             }
         }
+
         SimpleDiffRequest request = new SimpleDiffRequest(
                 targetFile.getName(),
                 createTargetDiffContent(project, leftDiffVirtualFile, contents.get(0)),
